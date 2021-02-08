@@ -16,6 +16,7 @@
         - server
 """
 
+from os import name
 import socket
 import threading
 import time
@@ -39,7 +40,7 @@ def getDNSEntries(filePath = "./PROJI-DNSRS.txt"):
         ----------------
 
         @return:
-            dict : ip address and message as value with hostname as key
+            dict : ip address and flag as value with hostname as key
     """
     
     #initiate the dictionary:
@@ -50,18 +51,18 @@ def getDNSEntries(filePath = "./PROJI-DNSRS.txt"):
         for entryLine in entryFile.readlines():
             entryComponents = entryLine.split()
             if "NS" in entryComponents:
-                #the ns entry in the input only has address and message so...
+                #the ns entry in the input only has address and flag so...
                 hostName = TOP_LEVEL_SERVER # static name i came up with myself as a place holder
                 address = entryComponents[0]
-                message = entryComponents[2] # not 1 since there is a '-' in the line
+                flag = entryComponents[2] # not 1 since there is a '-' in the line
 
-                dnsEntryDict[hostName]  = (address,message)
+                dnsEntryDict[hostName]  = (address,flag)
             else:
                 hostName = entryComponents[0]
                 address = entryComponents[1]
-                message = entryComponents[2]
+                flag = entryComponents[2]
 
-                dnsEntryDict[hostName]  = (address,message)
+                dnsEntryDict[hostName]  = (address,flag)
     
     return dnsEntryDict
 
@@ -69,7 +70,7 @@ def getDNSEntries(filePath = "./PROJI-DNSRS.txt"):
 def processDNSQuery(queriedHostname:str,dnsDict:dict):
     r"""
         Searches the dns dictionary for the queried hostname. If it exists then it returns the
-        address and message associated with it in the dictionary. 
+        address and flag associated with it in the dictionary. 
         
         --------------------
 
@@ -82,7 +83,7 @@ def processDNSQuery(queriedHostname:str,dnsDict:dict):
 
         @return:
             
-            str :  the address and message associated with the provided hostname if it exists. If it does not then this method returns the top level server and "NS".
+            str :  the address and flag associated with the provided hostname if it exists. If it does not then this method returns the top level server and "NS".
         
         ---------------------
 
@@ -91,7 +92,7 @@ def processDNSQuery(queriedHostname:str,dnsDict:dict):
         domain name.
     """
     
-    # get the (hostname,message) tuple that will be the response to the client request
+    # get the (hostname,flag) tuple that will be the response to the client request
     queryResponseEntry = dnsDict.get(queriedHostname,dnsDict.get(TOP_LEVEL_SERVER))
 
     # turn the response entry to a string (so it can be sent back through socket stream)
@@ -148,18 +149,24 @@ def server():
     serverSocket.bind(serverBindingDetails)
     serverSocket.listen()
 
-    #wait for client request and process the request:
-    clientSocketId, clientAddress = serverSocket.accept()
+    # loop so that multiple requests can be received:
+    while(1):
+        try:
+            #wait for client request and process the request:
+            clientSocketId, clientAddress = serverSocket.accept()
 
-    #   extract data from client socket:
-    clientDataReceived_bytes = clientSocketId.recv(MAX_REQUEST_SIZE)
-    clientDataReceived = clientDataReceived_bytes.decode('utf-8')
+            #   extract data from client socket:
+            clientDataReceived_bytes = clientSocketId.recv(MAX_REQUEST_SIZE)
+            clientDataReceived = clientDataReceived_bytes.decode('utf-8')
 
-    #   check if hostname is in the root dns server:
-    toBeSentBackToClient = processDNSQuery(clientDataReceived,dnsDict)
+            #   check if hostname is in the root dns server:
+            toBeSentBackToClient = processDNSQuery(clientDataReceived,dnsDict)
 
-    #   return the results to the client:
-    clientSocketId.send(toBeSentBackToClient.encode('utf-8'))
+            #   return the results to the client:
+            clientSocketId.send(toBeSentBackToClient.encode('utf-8'))
+        except:
+            break
+    
 
     serverSocket.close()
     exit()
@@ -167,4 +174,6 @@ def server():
 
 
 if __name__ == "__main__":
-    pass
+    serverThread = threading.Thread(name='serverThread',target=server)
+    serverThread.start()
+    print("Server Thread Started")
