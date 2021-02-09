@@ -14,6 +14,7 @@
 
 #imports
 import socket
+import os
 
 # constants (will use constants to define the address and port for rs and ts until clarification is obtained); these will be changed
 RS_HOSTADDRESS = socket.gethostbyname(socket.gethostname())
@@ -22,6 +23,7 @@ TS_HOSTADDRESS = socket.gethostbyname(socket.gethostname())
 TS_PORT = 50008
 NS_FLAG = "NS"
 OUTPUT_FILE_PATH = './RESOLVED_2.txt' #this needs to be changed to just RESOLVED.txt
+BUFFER_SIZE = 200
 
 def readInputFile(filePath:str='./PROJI-HNS.txt'):
     r"""
@@ -38,13 +40,13 @@ def readInputFile(filePath:str='./PROJI-HNS.txt'):
     """
     
     with open(filePath,'r') as inputfile:
-        hostNameList = inputfile.readlines
+        hostNameList = inputfile.readlines()
     
     return hostNameList
 
 
 
-def sendRequest(hostName:str,destination:tuple,clientSocket):
+def sendRequest(hostName:str,destination:tuple,clientSocket:socket.socket):
     r"""
         Sends a request to either the root server or the top level server based on the destination parameter.
 
@@ -58,7 +60,16 @@ def sendRequest(hostName:str,destination:tuple,clientSocket):
 
         @returns : str - the response from the server
     """
-    pass
+
+    #send server the hostname:
+    clientSocket.send(hostName.encode('utf-8'))
+    print(hostName)
+
+    #wait for response from server:
+    dataFromServer = clientSocket.recv(BUFFER_SIZE).decode('utf-8')
+
+    return dataFromServer
+
 
 
 def clientFunctionalities():
@@ -71,15 +82,17 @@ def clientFunctionalities():
     #setup the client socket:
     clientSocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 
-    #set destination details:
+    #   set destination details and create socket connections:
     rs_destination = (RS_HOSTADDRESS,RS_PORT)
     ts_destination = (TS_HOSTADDRESS,TS_PORT)
+    clientSocket.connect(rs_destination)
     
     hostNames = readInputFile() # get inputs
     resultList = [] # list of str's returned by the servers; will be written to the output file at the end
 
     # make requests for each hostName in the inputfile
     for hostName in hostNames:
+        #print(hostName)
         #make request to the root server:
         rootResponse = sendRequest(hostName,rs_destination,clientSocket)
 
@@ -87,6 +100,8 @@ def clientFunctionalities():
         if NS_FLAG not in rootResponse:
             resultList.append(rootResponse)
             continue
+        else:
+            continue #only for testing purposes get rid of this after the ts.py has been implemented
 
         # at this point we know we have to send request to the top level server because NS flag was given by root
         tsResponse = sendRequest(hostName,ts_destination,clientSocket)
@@ -97,4 +112,10 @@ def clientFunctionalities():
     with open(OUTPUT_FILE_PATH,'a') as outputFile:
         for res in resultList:
             outputFile.write(res)
+            outputFile.write('\n')
     
+
+
+if __name__ == "__main__":
+    print(os.getpid())
+    clientFunctionalities()

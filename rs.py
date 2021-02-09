@@ -16,7 +16,7 @@
         - server
 """
 
-from os import name
+import os
 import socket
 import threading
 import time
@@ -67,6 +67,24 @@ def getDNSEntries(filePath = "./PROJI-DNSRS.txt"):
     return dnsEntryDict
 
 
+def getItemFromDict(itemKey:str,dnsDict:dict):
+    r"""
+        Returns item from the dictionary containing the dns information. This was implemented
+        because the get() method for dictionaries was not working for our case.
+
+        --------------------
+
+        @param:
+            itemKey : the hostname being queried
+            dnsDict : the dictionary with dns data
+    """
+    for key in dnsDict.keys():
+        #print(itemKey,len(itemKey),key,len(key))
+        if itemKey == key:
+            return dnsDict[key]
+    return dnsDict[TOP_LEVEL_SERVER]
+
+
 def processDNSQuery(queriedHostname:str,dnsDict:dict):
     r"""
         Searches the dns dictionary for the queried hostname. If it exists then it returns the
@@ -92,8 +110,10 @@ def processDNSQuery(queriedHostname:str,dnsDict:dict):
         domain name.
     """
     
-    # get the (hostname,flag) tuple that will be the response to the client request
+    # get the (hostname,flag) tuple that will be the response to the client request; dnsDict.get(queriedHostname,dnsDict.get(TOP_LEVEL_SERVER)) ;getItemFromDict(queriedHostname,dnsDict)
+    #print(queriedHostname)
     queryResponseEntry = dnsDict.get(queriedHostname,dnsDict.get(TOP_LEVEL_SERVER))
+    #print(queryResponseEntry)
 
     # turn the response entry to a string (so it can be sent back through socket stream)
     toBeReturned = ''
@@ -149,18 +169,21 @@ def server():
     serverSocket.bind(serverBindingDetails)
     serverSocket.listen()
 
+    #wait for client request and process the request:
+    clientSocketId, clientAddress = serverSocket.accept()
+
     # loop so that multiple requests can be received:
     while(1):
         try:
-            #wait for client request and process the request:
-            clientSocketId, clientAddress = serverSocket.accept()
+            #print("waiting")
 
             #   extract data from client socket:
             clientDataReceived_bytes = clientSocketId.recv(MAX_REQUEST_SIZE)
-            clientDataReceived = clientDataReceived_bytes.decode('utf-8')
+            clientDataReceived = clientDataReceived_bytes.decode('utf-8').strip()
 
             #   check if hostname is in the root dns server:
             toBeSentBackToClient = processDNSQuery(clientDataReceived,dnsDict)
+            #print(toBeSentBackToClient)
 
             #   return the results to the client:
             clientSocketId.send(toBeSentBackToClient.encode('utf-8'))
@@ -174,6 +197,7 @@ def server():
 
 
 if __name__ == "__main__":
+    print(os.getpid())
     serverThread = threading.Thread(name='serverThread',target=server)
     serverThread.start()
     print("Server Thread Started")
