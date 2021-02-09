@@ -1,6 +1,6 @@
 # CS352: Internet Technology - Project 1
 
-0 - Rizwan Chowdhury and Mihir 
+0 - Rizwan Chowdhury and Mihir Desai
 
 1 - To be done later
 

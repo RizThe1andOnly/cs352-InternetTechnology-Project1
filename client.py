@@ -10,7 +10,6 @@
         - clientFunctionalities
 """
 
-# TODO: sendRequest function !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #imports
 import socket
