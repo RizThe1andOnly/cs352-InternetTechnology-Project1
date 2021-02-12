@@ -20,11 +20,14 @@ import os
 import socket
 import threading
 import time
+import sys
 
 
 
 TOP_LEVEL_SERVER = "TopLevelServer"
 MAX_REQUEST_SIZE = 200
+RS_BIND_ADDRESS = ''
+RS_BIND_PORT = 50007
 
 def getDNSEntries(filePath = "./PROJI-DNSRS.txt"):
     r"""
@@ -58,7 +61,7 @@ def getDNSEntries(filePath = "./PROJI-DNSRS.txt"):
 
                 dnsEntryDict[hostName]  = (address,flag)
             else:
-                hostName = entryComponents[0]
+                hostName = entryComponents[0].lower()
                 address = entryComponents[1]
                 flag = entryComponents[2]
 
@@ -67,7 +70,7 @@ def getDNSEntries(filePath = "./PROJI-DNSRS.txt"):
     return dnsEntryDict
 
 
-def getItemFromDict(itemKey:str,dnsDict:dict):
+def getItemFromDict(itemKey,dnsDict):
     r"""
         Returns item from the dictionary containing the dns information. This was implemented
         because the get() method for dictionaries was not working for our case.
@@ -85,7 +88,7 @@ def getItemFromDict(itemKey:str,dnsDict:dict):
     return dnsDict[TOP_LEVEL_SERVER]
 
 
-def processDNSQuery(queriedHostname:str,dnsDict:dict):
+def processDNSQuery(queriedHostname,dnsDict):
     r"""
         Searches the dns dictionary for the queried hostname. If it exists then it returns the
         address and flag associated with it in the dictionary. 
@@ -111,7 +114,6 @@ def processDNSQuery(queriedHostname:str,dnsDict:dict):
     """
     
     #get the (hostname,flag) tuple that will be the response to the client request; dnsDict.get(queriedHostname,dnsDict.get(TOP_LEVEL_SERVER)) ;getItemFromDict(queriedHostname,dnsDict)
-
     #print(queriedHostname)
     queryResponseEntry = dnsDict.get(queriedHostname,dnsDict.get(TOP_LEVEL_SERVER))
     #print(queryResponseEntry)
@@ -124,10 +126,15 @@ def processDNSQuery(queriedHostname:str,dnsDict:dict):
 
 
 
-def server():
+def server(rsPort):
     r"""
         Method to set up server and keep it running. Based on project zero code.
 
+        ---------------------
+
+        @param:
+            rsPort : int - the port to bind the root server ; obtained originally from the command line
+        
         ---------------------
 
         Will receive requests from the client and check the dns dictionary 
@@ -135,17 +142,7 @@ def server():
         exists. If it does then its corresponding details will be returned, if not then
         the top level server details will be returned.
 
-        ------------------------
-
-        For now will bind server to localhost and test on same machine for all scripts.
-        Will change this later to include capabilities to run on multiple machines.
-
-        ...
-
-        ***Note !!!!! ***
-        Also currently this code is written so that the server closes after one client request is served.
-        I do not know yet if this is right or how to do it in another way. We can test and look up how to 
-        do it the best way going forward. Sorry for leaving it incomplete.
+        ----------------------
 
         ...
 
@@ -154,8 +151,8 @@ def server():
     """
     
     # set the host address or port based on project requirements here
-    hostAddress = ''
-    hostPort = 50007
+    hostAddress = RS_BIND_ADDRESS
+    hostPort = rsPort
 
     #setup dns data structure:
     dnsDict = getDNSEntries()
@@ -199,6 +196,10 @@ def server():
 
 if __name__ == "__main__":
     print(os.getpid())
-    serverThread = threading.Thread(name='serverThread',target=server)
+
+    #get the port from command line arg:
+    rsPort = int(sys.argv[1])
+
+    serverThread = threading.Thread(name='serverThread',target=server,args=[rsPort])
     serverThread.start()
     print("Server Thread Started")
