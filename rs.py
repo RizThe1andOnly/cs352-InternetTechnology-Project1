@@ -110,11 +110,8 @@ def processDNSQuery(queriedHostname:str,dnsDict:dict):
         domain name.
     """
     
-<<<<<<< HEAD
     #get the (hostname,flag) tuple that will be the response to the client request; dnsDict.get(queriedHostname,dnsDict.get(TOP_LEVEL_SERVER)) ;getItemFromDict(queriedHostname,dnsDict)
-=======
-    # get the (hostname,flag) tuple that will be the response to the client request; dnsDict.get(queriedHostname,dnsDict.get(TOP_LEVEL_SERVER)) ;getItemFromDict(queriedHostname,dnsDict)
->>>>>>> f0bc4fc6b1382e70a9d396fab778a20ec198d652
+
     #print(queriedHostname)
     queryResponseEntry = dnsDict.get(queriedHostname,dnsDict.get(TOP_LEVEL_SERVER))
     #print(queryResponseEntry)
