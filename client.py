@@ -18,10 +18,7 @@ import os
 import sys
 
 # constants (will use constants to define the address and port for rs and ts until clarification is obtained); these will be changed
-RS_HOSTADDRESS_LOCAL = socket.gethostbyname(sys.argv[1])
-RS_PORT = sys.argv[2]
-#TS_HOSTADDRESS_LOCAL = socket.gethostbyname(socket.gethostname())
-TS_PORT = sys.argv[3]
+RS_HOSTADDRESS_LOCAL = socket.gethostbyname(socket.gethostname())
 NS_FLAG = "NS"
 TS_RESPONSE_MARKER = 'NS'
 OUTPUT_FILE_PATH = './RESOLVED.txt' #this needs to be changed to just RESOLVED.txt
@@ -66,7 +63,6 @@ def sendRequest(hostName,clientSocket):
 
     #send server the hostname:
     clientSocket.send(hostName.encode('utf-8'))
-    #print(hostName)
 
     #wait for response from server:
     dataFromServer = clientSocket.recv(BUFFER_SIZE).decode('utf-8')
@@ -97,23 +93,25 @@ def extractTSAddress(rsResponse):
 
     return tsAddress
 
-def clientFunctionalities(rsHostAddress,rsPort,tsPort):
+def clientFunctionalities(rsHostName,rsPort,tsPort):
     r"""
         First gets list of inputs (by calling readInputFile()). Then opens connection to root and if necessary top level
         server to request the addresses corresponding to hostnames from input files. Requests are made for each input.
         Finally writes to the output file the responses from the requests.
     """
 
+    # get host address from provided hostname
+    rsHostAddress = socket.gethostbyname(rsHostName)
+    
     #setup the client socket:
     clientSocket_rs = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     clientSocket_ts = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     tsConnectionAcheived = False
 
     #   set destination details and create socket connections:
-    if rsHostAddress == 'localhost':
+    if rsHostName == 'localhost':
         rsHostAddress = RS_HOSTADDRESS_LOCAL
     rs_destination = (rsHostAddress,rsPort)
-    #print(rs_destination)
     clientSocket_rs.connect(rs_destination)
 
     
@@ -122,7 +120,6 @@ def clientFunctionalities(rsHostAddress,rsPort,tsPort):
 
     # make requests for each hostName in the inputfile
     for hostName in hostNames:
-        #print(hostName)
         #make request to the root server:
         hostName = hostName.lower().strip('\n')
         rsResponse = sendRequest(hostName,clientSocket_rs)
@@ -135,7 +132,7 @@ def clientFunctionalities(rsHostAddress,rsPort,tsPort):
 
         # at this point we know we have to send request to the top level server because NS flag was given by 
         if not tsConnectionAcheived:
-            ts_destination = (extractTSAddress(rsResponse),tsPort)
+            ts_destination = (socket.gethostbyname(extractTSAddress(rsResponse)),tsPort)
             clientSocket_ts.connect(ts_destination)
             tsConnectionAcheived = True
         
@@ -157,8 +154,7 @@ def clientFunctionalities(rsHostAddress,rsPort,tsPort):
 
 
 if __name__ == "__main__":
-    print(os.getpid())
-
+    
     # parse the command line arguments; the positions of the args are based on instructions:
     listOfArguments = sys.argv
     rsHostAddress = str(listOfArguments[1])

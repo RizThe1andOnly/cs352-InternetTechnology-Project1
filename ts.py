@@ -25,7 +25,6 @@ import sys
 ROOT_SERVER = "RootServer"
 MAX_REQUEST_SIZE = 200
 TS_BIND_ADDRESS = ''
-TS_BIND_PORT = 50008
 ERROR_MESSAGE = '- Error:HOST NOT FOUND'
 
 def getDNSEntries(filePath = "./PROJI-DNSTS.txt"):
@@ -84,9 +83,7 @@ def processDNSQuery(queriedHostname,dnsDict):
     """
     
     #get the (hostname,flag) tuple that will be the response to the client request; dnsDict.get(queriedHostname,dnsDict.get(TOP_LEVEL_SERVER)) ;getItemFromDict(queriedHostname,dnsDict)
-    #print(queriedHostname)
     queryResponseEntry = dnsDict.get(queriedHostname,None)
-    #print(queryResponseEntry)
 
     # turn the response entry to a string (so it can be sent back through socket stream)
     toBeReturned = ''
@@ -143,7 +140,6 @@ def server(tsPort):
     # loop so that multiple requests can be received:
     while(1):
         try:
-            #print("waiting")
 
             #   extract data from client socket:
             clientDataReceived_bytes = clientSocketId.recv(MAX_REQUEST_SIZE)
@@ -151,7 +147,6 @@ def server(tsPort):
 
             #   check if hostname is in the toplevel dns server:
             toBeSentBackToClient = processDNSQuery(clientDataReceived,dnsDict)
-            #print(toBeSentBackToClient)
 
             #   return the results to the client:
             clientSocketId.send(toBeSentBackToClient.encode('utf-8'))
@@ -163,11 +158,9 @@ def server(tsPort):
     exit()
 
 if __name__ == "__main__":
-    print(os.getpid())
 
     #get command line argument for the port
     tsPort = int(sys.argv[1])
-    #print(tsPort)
 
     serverThread = threading.Thread(name='serverThread',target=server,args=[tsPort])
     serverThread.start()
