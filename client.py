@@ -23,6 +23,7 @@ NS_FLAG = "NS"
 TS_RESPONSE_MARKER = 'NS'
 OUTPUT_FILE_PATH = './RESOLVED.txt' #this needs to be changed to just RESOLVED.txt
 BUFFER_SIZE = 200
+RESULT_STRING_DELIMITER = '\n'
 
 
 def readInputFile(filePath='./PROJI-HNS.txt'):
@@ -116,18 +117,19 @@ def clientFunctionalities(rsHostName,rsPort,tsPort):
 
     
     hostNames = readInputFile() # get inputs
-    resultList = [] # list of str's returned by the servers; will be written to the output file at the end
+    aggResString = ''
 
     # make requests for each hostName in the inputfile
     for hostName in hostNames:
         #make request to the root server:
         hostName = hostName.lower().strip('\n')
-        rsResponse = sendRequest(hostName,clientSocket_rs)
+        hostName = hostName.strip()
+        rsResponse = sendRequest(hostName,clientSocket_rs).strip()
 
         #check flag:
         if NS_FLAG not in rsResponse:
-            resultString = str(hostName + ' ' + rsResponse)
-            resultList.append(resultString)
+            resultString = hostName + ' ' + rsResponse
+            aggResString += resultString + RESULT_STRING_DELIMITER
             continue
 
         # at this point we know we have to send request to the top level server because NS flag was given by 
@@ -136,9 +138,10 @@ def clientFunctionalities(rsHostName,rsPort,tsPort):
             clientSocket_ts.connect(ts_destination)
             tsConnectionAcheived = True
         
-        tsResponse = sendRequest(hostName,clientSocket_ts)
-        resultString = str(hostName + ' ' + tsResponse)
-        resultList.append(resultString)
+        
+        tsResponse = sendRequest(hostName,clientSocket_ts).strip()
+        resultString = hostName + ' ' + tsResponse
+        aggResString += resultString + RESULT_STRING_DELIMITER
     
     
     clientSocket_ts.close()
@@ -146,9 +149,8 @@ def clientFunctionalities(rsHostName,rsPort,tsPort):
     
     #write output to the RESOLVED.TXT
     with open(OUTPUT_FILE_PATH,'a') as outputFile:
-        for res in resultList:
-            outputFile.write(res)
-            outputFile.write('\n')
+        outputFile.write(aggResString)
+        
     
 
 
