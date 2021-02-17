@@ -1,6 +1,6 @@
 # CS352: Internet Technology - Project 1
 
-0 - Rizwan Chowdhury (rzc2) and Mihir Desai (put netid here)
+0 - Rizwan Chowdhury (rzc2) and Mihir Desai (mvd67)
 
 1 - We implemented the client function by using loops for both the client and the two servers. The client used a for loop to go through each line (hostname)
     and send a req to the appropriate server for a response using the send() method for sockets. The root and top-level servers implement a while loop that 
