@@ -20,9 +20,13 @@ import os
 import socket
 import threading
 import time
+import sys
 
 ROOT_SERVER = "RootServer"
 MAX_REQUEST_SIZE = 200
+TS_BIND_ADDRESS = ''
+TS_BIND_PORT = 50008
+ERROR_MESSAGE = '- Error:HOST NOT FOUND'
 
 def getDNSEntries(filePath = "./PROJI-DNSTS.txt"):
     r"""
@@ -48,17 +52,13 @@ def getDNSEntries(filePath = "./PROJI-DNSTS.txt"):
     with open(filePath,mode='r') as entryFile:
         for entryLine in entryFile.readlines():
             entryComponents = entryLine.split()
-            if entryComponents in entryFile: #checks if the split is in the text file, if it is then it sets the following parameters
-                hostName = entryComponents[0]
-                address = entryComponents[1]
-                flag = entryComponents[2]
-
-                dnsEntryDict[hostName]  = (address,flag)
-            else: #when its not found it displays the following error
-                print("Error:HOST NOT FOUND")   
+            hostName = entryComponents[0].lower()
+            address = entryComponents[1]
+            flag = entryComponents[2]
+            dnsEntryDict[hostName]  = (address,flag)   
     return dnsEntryDict
 
-def processDNSQuery(queriedHostname:str,dnsDict:dict):
+def processDNSQuery(queriedHostname,dnsDict):
     r"""
         Searches the dns dictionary for the queried hostname. If it exists then it returns the
         address and flag associated with it in the dictionary. 
@@ -85,19 +85,27 @@ def processDNSQuery(queriedHostname:str,dnsDict:dict):
     
     #get the (hostname,flag) tuple that will be the response to the client request; dnsDict.get(queriedHostname,dnsDict.get(TOP_LEVEL_SERVER)) ;getItemFromDict(queriedHostname,dnsDict)
     #print(queriedHostname)
-    queryResponseEntry = dnsDict.get(queriedHostname,dnsDict.get(TOP_LEVEL_SERVER))
+    queryResponseEntry = dnsDict.get(queriedHostname,None)
     #print(queryResponseEntry)
 
     # turn the response entry to a string (so it can be sent back through socket stream)
     toBeReturned = ''
-    toBeReturned = queryResponseEntry[0] + " " + queryResponseEntry[1]
+    if queryResponseEntry is not None:
+        toBeReturned = queryResponseEntry[0] + " " + queryResponseEntry[1]
+    else:
+        toBeReturned = ERROR_MESSAGE
 
     return toBeReturned
 
-def server():
+def server(tsPort):
     r"""
         Method to set up server and keep it running. Based on project zero code.
 
+        ---------------------
+
+        @param:
+            tsPort : the port to bind the ts; obtained originally from the command line
+        
         ---------------------
 
         Will receive requests from the client and check the dns dictionary 
@@ -109,23 +117,12 @@ def server():
 
         For now will bind server to localhost and test on same machine for all scripts.
         Will change this later to include capabilities to run on multiple machines.
-
-        ...
-
-        ***Note !!!!! ***
-        Also currently this code is written so that the server closes after one client request is served.
-        I do not know yet if this is right or how to do it in another way. We can test and look up how to 
-        do it the best way going forward. Sorry for leaving it incomplete.
-
-        ...
-
-        ***Note !***
-        The code for ts.py will be very similar to this if not identical.
     """
+
     
     # set the host address or port based on project requirements here
-    hostAddress = ''
-    hostPort = 50008
+    hostAddress = TS_BIND_ADDRESS
+    hostPort = tsPort
 
     #setup dns data structure:
     dnsDict = getDNSEntries()
@@ -167,6 +164,11 @@ def server():
 
 if __name__ == "__main__":
     print(os.getpid())
-    serverThread = threading.Thread(name='serverThread',target=server)
+
+    #get command line argument for the port
+    tsPort = int(sys.argv[1])
+    #print(tsPort)
+
+    serverThread = threading.Thread(name='serverThread',target=server,args=[tsPort])
     serverThread.start()
     print("Server Thread Started")
