@@ -4,3 +4,6 @@ mx.rutgers.com 192.64.4.5 A
 grep.cs.princeton.edu 182.49.3.2 A
 www.ibm.com 64.42.3.4 A
 www.google.edu 8.7.45.2 A
+www.cs.WISC.edu 0.0.0.0 A
+cse.UCSD.edu 0.0.0.0 A
+www.cs.columbia.edu 0.0.0.0 A

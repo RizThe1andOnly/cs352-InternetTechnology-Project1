@@ -4,3 +4,6 @@ www.ibm.edu
 google.com
 www.google.com
 MX.RUTGERS.EDU
+www.cs.WISC.edu
+cse.UCSD.edu
+www.cs.columbia.edu

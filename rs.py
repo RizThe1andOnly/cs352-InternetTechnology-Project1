@@ -27,7 +27,6 @@ import sys
 TOP_LEVEL_SERVER = "TopLevelServer"
 MAX_REQUEST_SIZE = 200
 RS_BIND_ADDRESS = ''
-RS_BIND_PORT = 50007
 
 def getDNSEntries(filePath = "./PROJI-DNSRS.txt"):
     r"""
@@ -70,24 +69,6 @@ def getDNSEntries(filePath = "./PROJI-DNSRS.txt"):
     return dnsEntryDict
 
 
-def getItemFromDict(itemKey,dnsDict):
-    r"""
-        Returns item from the dictionary containing the dns information. This was implemented
-        because the get() method for dictionaries was not working for our case.
-
-        --------------------
-
-        @param:
-            itemKey : the hostname being queried
-            dnsDict : the dictionary with dns data
-    """
-    for key in dnsDict.keys():
-        #print(itemKey,len(itemKey),key,len(key))
-        if itemKey == key:
-            return dnsDict[key]
-    return dnsDict[TOP_LEVEL_SERVER]
-
-
 def processDNSQuery(queriedHostname,dnsDict):
     r"""
         Searches the dns dictionary for the queried hostname. If it exists then it returns the
@@ -113,10 +94,7 @@ def processDNSQuery(queriedHostname,dnsDict):
         domain name.
     """
     
-    #get the (hostname,flag) tuple that will be the response to the client request; dnsDict.get(queriedHostname,dnsDict.get(TOP_LEVEL_SERVER)) ;getItemFromDict(queriedHostname,dnsDict)
-    #print(queriedHostname)
     queryResponseEntry = dnsDict.get(queriedHostname,dnsDict.get(TOP_LEVEL_SERVER))
-    #print(queryResponseEntry)
 
     # turn the response entry to a string (so it can be sent back through socket stream)
     toBeReturned = ''
@@ -165,7 +143,7 @@ def server(rsPort):
     
     serverBindingDetails = (hostAddress,hostPort)
     serverSocket.bind(serverBindingDetails)
-    serverSocket.listen()
+    serverSocket.listen(1)
 
     #wait for client request and process the request:
     clientSocketId, clientAddress = serverSocket.accept()
@@ -173,7 +151,6 @@ def server(rsPort):
     # loop so that multiple requests can be received:
     while(1):
         try:
-            #print("waiting")
 
             #   extract data from client socket:
             clientDataReceived_bytes = clientSocketId.recv(MAX_REQUEST_SIZE)
@@ -181,7 +158,6 @@ def server(rsPort):
 
             #   check if hostname is in the root dns server:
             toBeSentBackToClient = processDNSQuery(clientDataReceived,dnsDict)
-            #print(toBeSentBackToClient)
 
             #   return the results to the client:
             clientSocketId.send(toBeSentBackToClient.encode('utf-8'))
@@ -195,7 +171,6 @@ def server(rsPort):
 
 
 if __name__ == "__main__":
-    print(os.getpid())
 
     #get the port from command line arg:
     rsPort = int(sys.argv[1])
